@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
-const clientStates = {
-  CONNECTED: "CONNECTED"
-  
-}
 
 const WebSocketComponent = () => {
   const [socket, setSocket] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [receivedFile, setReceivedFile] = useState(null);
+  let selectedFilename = useRef('');
   
-
   const handleFileInputChange = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
+    selectedFilename.current = file.name;
   };
 
   const handleWebSocketOpen = () => {
@@ -45,6 +42,13 @@ const WebSocketComponent = () => {
     console.log('WebSocket connection closed');
   };
 
+  const patelFunction = (fileObject) => {
+    // insert functionality here
+    // expect a base 64 string from this
+    return "";
+  }
+
+
   const handleSendButtonClick = async () => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       console.error('WebSocket connection is not open');
@@ -56,23 +60,17 @@ const WebSocketComponent = () => {
       return;
     }
 
-    const reader = new FileReader();
+    // sending a File Object
+    let base64FileContent = patelFunction(selectedFile);
 
-    reader.onload = () => {
-      const fileContent = reader.result;
-      console.log(fileContent);
-      // Assume the file type is determined based on the file extension
-      const fileType = selectedFile.name.split('.').pop();
-
-      const data = {
-        type: fileType,
-        content: fileContent,
-      };
-      console.log(data);
-      socket.send(JSON.stringify(data));
+    let saveFileObject = {
+      requestType: "saveFile",
+      name: selectedFilename.current,
+      body: base64FileContent
     };
 
-    reader.readAsArrayBuffer(selectedFile);
+    socket.send(JSON.stringify(saveFileObject));
+ 
   };
 
   const handleConnectButtonClick = () => {
@@ -81,7 +79,7 @@ const WebSocketComponent = () => {
     newSocket.addEventListener('open', handleWebSocketOpen);
     newSocket.addEventListener('message', handleWebSocketMessage);
     newSocket.addEventListener('close', handleWebSocketClose);
-
+    
     setSocket(newSocket);
   };
 
