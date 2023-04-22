@@ -1,13 +1,14 @@
 import React, { useRef, useState } from 'react';
 import LoginForm from "./LoginForm";
+import { RequestType, Status } from './constants';
 
 const WebSocketComponent = () => {
-  const [socket, setSocket] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [receivedFile, setReceivedFile] = useState(null);
   let selectedFilename = useRef('');
   let currUsername = useRef('');
   let currPassword = useRef('');
+  let socket = useRef(null);
   
   const handleFileInputChange = (event) => {
     const file = event.target.files[0];
@@ -17,17 +18,49 @@ const WebSocketComponent = () => {
 
   const handleWebSocketOpen = () => {
     console.log('WebSocket connection opened');
-    let initObject = {	
-      requestType: "Init",
-      username: currUsername.current,
-      password: currPassword.current
-    }
-    socket.send(JSON.stringify(initObject));
+   
+      let initObject = {	
+        requestType: RequestType.INIT,
+        username: currUsername.current,
+        password: currPassword.current
+      }
+      socket.current.send(JSON.stringify(initObject));
+   
   };
 
   const handleWebSocketMessage = (event) => {
     const receivedData = JSON.parse(event.data);
     console.log("Response from server:", receivedData);
+    let requestType = receivedData.requestType;
+    let status = receivedData.status;
+    switch(requestType) {
+      case RequestType.INIT:
+        if (status === Status.SUCCESS) {
+          console.log("Successfully init current username with server")
+        }
+        else {
+          // this should not happen
+        }
+        break;
+      case RequestType.SAVE_FILE:
+        if (status === Status.SUCCESS) {
+          console.log("File successfully sent!")
+        }
+        else {
+          console.log("Error:", receivedData.message);
+        }
+        break;
+      case RequestType.RETRIEVE_FILE:
+        if (status === Status.SUCCESS) {
+          console.log("File retrieved");
+        }
+        else {
+          console.log("Error", receivedData.message);
+        }
+        break;
+      default:
+        console.log("Error: requestType, ", requestType)
+    }
   };
 
   const handleWebSocketClose = () => {
@@ -46,20 +79,18 @@ const WebSocketComponent = () => {
       console.error('WebSocket connection is not open');
       return;
     }
-
     if (!selectedFile) {
       console.error('No file selected');
       return;
     }
-
     // sending a File Object
     let base64FileContent = patelFunction(selectedFile);
 
     let saveFileObject = {
-      username: "",
-      password: "",
-      requestType: "saveFile",
-      name: selectedFilename.current,
+      username: currUsername.current,
+      password: currPassword.current,
+      requestType: RequestType.SAVE_FILE,
+      filename: selectedFilename.current,
       body: base64FileContent
     };
 
@@ -72,8 +103,7 @@ const WebSocketComponent = () => {
     newSocket.addEventListener('open', handleWebSocketOpen);
     newSocket.addEventListener('message', handleWebSocketMessage);
     newSocket.addEventListener('close', handleWebSocketClose);
-
-    setSocket(newSocket);
+    socket.current = newSocket;
   };
 
   const handleLogin = ({ username, password }) => {
