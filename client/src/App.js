@@ -1,51 +1,55 @@
-import React, { useState } from 'react';
-import io from 'socket.io-client';
+import React, { useState, useRef } from 'react';
 
-const SOCKET_URL = 'http://localhost:3000'; // replace with your server URL
+const App = () => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [message, setMessage] = useState('');
+  const [receivedMessage, setReceivedMessage] = useState('');
 
-function App() {
-  const [socket, setSocket] = useState(null);
-  const [filePath, setFilePath] = useState(null);
+  const webSocketRef = useRef(null);
 
-  const handleConnect = () => {
-    // creating a socket connection with the server based on the SOCKET_URL
-    const newSocket = io(SOCKET_URL, {
-      query: {
-        entityType: "client",
-        entityId: "aritra" 
-      }
-    });
-    setSocket(newSocket);
-  };
+  const connectWebSocket = () => {
+    // Replace 'ws://localhost:8080' with the URL of your WebSocket server
+    const webSocket = new WebSocket('ws://localhost:8080');
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    setFilePath(file.path);
-  };
-
-  const handleFileSend = () => {
-    if (!socket || !filePath) {
-      console.error('WebSocket not connected or no file selected.');
-      return;
-    }
-
-    const fileData = {
-      name: filePath.split('\\').pop(), // get just the filename from the full path
-      path: filePath
+    webSocket.onopen = () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+      webSocketRef.current = webSocket;
     };
 
-    socket.emit('file', fileData);
-    console.log('File sent:', fileData);
+    webSocket.onclose = () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
+      webSocketRef.current = null;
+    };
+
+    webSocket.onmessage = (event) => {
+      console.log('WebSocket received message:', event.data);
+      setReceivedMessage(event.data);
+    };
+  };
+
+  const sendMessage = () => {
+    if (webSocketRef.current) {
+      webSocketRef.current.send(message);
+      setMessage('');
+    }
   };
 
   return (
     <div>
-      <button onClick={handleConnect}>Connect to WebSocket</button>
+      <button onClick={connectWebSocket} disabled={isConnected}>
+        {isConnected ? 'WebSocket connected' : 'Connect WebSocket'}
+      </button>
       <br />
-      <input type="file" onChange={handleFileSelect} />
-      <button onClick={handleFileSend}>Send file to WebSocket</button>
+      <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} />
+      <button onClick={sendMessage} disabled={!isConnected}>
+        Send Message
+      </button>
+      <br />
+      <div>Received message: {receivedMessage}</div>
     </div>
   );
-}
+};
 
 export default App;
