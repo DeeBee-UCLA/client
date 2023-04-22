@@ -1,2 +1,2 @@
-# frontend
-A simple frontend, usable for sending and receiving data
+# Client
+A simple frontend for the client, usable for sending and receiving data
