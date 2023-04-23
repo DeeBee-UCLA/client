@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import Logo from './logo.png';
 
 const Form = styled.form`
   display: flex;
@@ -17,30 +16,11 @@ const Label = styled.label`
 
 const Input = styled.input`
   font-size: 1rem;
+  font-family: poppins;
   padding: 0.5rem;
   border: none;
   border-radius: 5px;
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-`;
-
-const Button = styled.button`
-  font-size: 1rem;
-  padding: 0.5rem;
-  background-color: #f1bf98;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #bacba9;
-  }
-`;
-
-const LogoImage = styled.img`
-  height: 100px;
-  margin: 1rem;
 `;
 
 
@@ -67,12 +47,11 @@ const LoginForm = (props) => {
 
   return (
     <Form onSubmit={handleSubmit}>
-      <LogoImage src={Logo} alt="Logo" />
-      <Label htmlFor="username">Username:</Label>
+      <Label>Username:</Label>
       <Input type="text" id="username" value={username} onChange={handleUsernameChange} />
-      <Label htmlFor="password">Password:</Label>
+      <Label>Password:</Label>
       <Input type="password" id="password" value={password} onChange={handlePasswordChange} />
-      <Button type="submit">Login</Button>
+      <button type="submit" >Login</button>
     </Form>
   );
 };

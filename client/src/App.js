@@ -2,6 +2,8 @@ import React, { useRef, useState } from "react";
 import LoginForm from "./LoginForm";
 import { RequestType, Status } from "./constants";
 import "./App.css";
+import { ReactComponent as ReactLogo } from "./logo.svg";
+import { ReactComponent as HiveLogo } from "./hive.svg";
 const crypto = require("crypto");
 const zlib = require("zlib");
 const dotenv = require("dotenv");
@@ -18,18 +20,24 @@ const WebSocketComponent = () => {
   const [login, setLogin] = useState(true);
 
   let selectedFilename = useRef("");
+  const fileInput = useRef(null);
   let currUsername = useRef("");
   let currPassword = useRef("");
   let socket = useRef(null);
 
   const handleFileInputChange = (event) => {
-    if (event.target.files) {
+    if (event.target.files.length > 0) {
       const file = event.target.files[0];
       setSelectedFile(file);
       selectedFilename.current = file.name;
     }
+    else{
+      setSelectedFile(null);
+      selectedFilename.current = "";
+    }
   };
   const handleOptionChange = (event) => {
+    console.log(event.target.value);
     setPickedFile(event.target.value);
   };
 
@@ -92,8 +100,8 @@ const WebSocketComponent = () => {
       case RequestType.FETCH_ALL_FILES:
         if (status === Status.SUCCESS) {
           console.log("Files fetched");
-          console.log(receivedData.message)
-          let files = (receivedData.message.files);
+          console.log(receivedData.message);
+          let files = receivedData.message.files;
           setFileList(files);
         } else {
           console.log("Error", receivedData.message);
@@ -108,7 +116,7 @@ const WebSocketComponent = () => {
   const handleWebSocketClose = () => {
     console.log("WebSocket connection closed");
     setLogin(true);
-    localStorage.setItem("username", '');
+    localStorage.setItem("username", "");
   };
 
   // ==========================================================================
@@ -198,7 +206,7 @@ const WebSocketComponent = () => {
       return;
     }
 
-      if (!pickedFile) {
+    if (!pickedFile) {
       console.error("No file selected");
       return;
     }
@@ -244,13 +252,13 @@ const WebSocketComponent = () => {
       body: base64FileContent,
     };
     console.log(saveFileObject);
-    setFileList(prevState => [...prevState, selectedFilename.current]);
+    setFileList((prevState) => [...prevState, selectedFilename.current]);
     socket.current.send(JSON.stringify(saveFileObject));
   };
 
   const handleLogin = ({ username, password }) => {
     if (username.length < 3 || password.length < 3) {
-      console.err("Username and password must be at least 5 characters long");
+      console.error("Username and password must be at least 5 characters long");
       return;
     }
     console.log("Login data:", { username, password });
@@ -261,54 +269,111 @@ const WebSocketComponent = () => {
     newSocket.addEventListener("message", handleWebSocketMessage);
     newSocket.addEventListener("close", handleWebSocketClose);
     socket.current = newSocket;
-    
   };
 
-
   return (
-    <>
-    {login && (
-    <div className="container">
-      <div className="login-banner">
-        <div className="navbar">
-          <h1 className="title">Login Form</h1>
+    <div className="vh">
+      {login && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "center", paddingTop:50 }}>
+            <ReactLogo style={{ height: 200 }} />
+          </div>
+          <div className="login-container">
+            <div className="login-banner">
+                <h1 className="title">Login Form</h1>
+            </div>
+            <div className="login-form">
+              <LoginForm onLogin={handleLogin} />
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="login-form">
-        <LoginForm onLogin={handleLogin} />
-      </div>
-      </div>)}
-
-      {!login && (
-       <>
-       <button style={{ backgroundColor: '#f1bf98', color: '#ffffff' }} className="btn" onClick={handleRetrieveButtonClick}>
-         Get File
-       </button>
-       <select style={{ backgroundColor: '#e1f4cb', color: '#717568' }} onChange={handleOptionChange}>
-         <option value="">Select a file</option>
-         {fileList.map((option) => (
-           <option key={option} value={option}>
-             {option}
-           </option>
-         ))}
-       </select>
-       <p style={{ color: '#3f4739' }}>You picked: {pickedFile}</p>
-       <div className="button-group">
-         <div className="input-group">
-           <input style={{ backgroundColor: '#e1f4cb', color: '#717568' }} type="file" className="file-input" onChange={handleFileInputChange} />
-           <button style={{ backgroundColor: '#bacba9', color: '#ffffff' }} className="btn" onClick={handleSendButtonClick}>
-             Send File
-           </button>
-         </div>
-       </div>
-     </>
-     
-      
       )}
 
-      </>
-
-    );
-
-    }
+      {!login && (
+        <div>
+          <div
+            style={{
+              height: "100vh",
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            <HiveLogo
+              className="hive"
+              style={{
+                height: 1000,
+                position: "absolute",
+                bottom: -300,
+                left: -100,
+              }}
+            />
+          </div>
+          <div className="outer">
+            <div className="container">
+              <div className="   ">
+                <h1>Retrieve Data</h1>
+                <button
+                  style={{ backgroundColor: "#f1bf98", color: "#ffffff" }}
+                  onClick={handleRetrieveButtonClick}
+                >
+                  Get File
+                </button>
+                <select
+                  style={{
+                    backgroundColor: "#e1f4cb",
+                    color: "#717568",
+                    fontFamily: "poppins",
+                    fontWeight: "bold",
+                  }}
+                  onChange={handleOptionChange}
+                >
+                  <option value="">Select a file</option>
+                  {fileList.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <div className="center">
+                  {pickedFile && <p>You picked: {pickedFile}</p>}
+                </div>
+              </div>
+            </div>
+            <div className="container">
+              <div className="input-group">
+                <h1>Store Data</h1>
+                <input
+                  style={{
+                    backgroundColor: "#e1f4cb",
+                    color: "#717568",
+                    display: "none",
+                  }}
+                  type="file"
+                  className="file-input"
+                  ref={fileInput}
+                  onChange={handleFileInputChange}
+                />
+                <div display="flex">
+                  <button onClick={() => fileInput.current.click()}>
+                    Choose File
+                  </button>
+                  {selectedFile && (
+                    <p>File Selected: {selectedFilename.current}</p>
+                  )}
+                  <button
+                    className="button"
+                    onClick={handleSendButtonClick}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Send File
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 export default WebSocketComponent;
