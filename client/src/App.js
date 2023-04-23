@@ -1,7 +1,16 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import LoginForm from "./LoginForm";
 import { RequestType, Status } from './constants';
 import './App.css';
+const crypto = require("crypto");
+const zlib = require("zlib");
+const dotenv = require('dotenv');
+dotenv.config();
+
+
+const encryptionString = process.env.REACT_APP_ENCRYPTION_KEY;
+// const encryptionKey = crypto.createHash('sha256').update(String(encryptionString)).digest('base64').substring(0, 32);
+const encryptionKey = encryptionString;
 
 const WebSocketComponent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -29,7 +38,7 @@ const WebSocketComponent = () => {
    
   };
 
-  const handleWebSocketMessage = (event) => {
+  const handleWebSocketMessage = async (event) => {
     const receivedData = JSON.parse(event.data);
     console.log("Response from server:", receivedData);
     let requestType = receivedData.requestType;
@@ -37,10 +46,11 @@ const WebSocketComponent = () => {
     switch(requestType) {
       case RequestType.INIT:
         if (status === Status.SUCCESS) {
-          console.log("Successfully init current username with server")
+          console.log("Successfully init current username with server");
         }
         else {
           // this should not happen
+          console.log("Failed Init");
         }
         break;
       case RequestType.SAVE_FILE:
@@ -48,6 +58,16 @@ const WebSocketComponent = () => {
           console.log("File successfully sent!")
         }
         else {
+          // This is for decryption on my end
+          let base64FileContent = receivedData.body;
+          let originalFile;
+          try {
+            originalFile = await decryptFile(base64FileContent, encryptionKey);
+          } catch (err) {
+            console.error(err);
+            return;
+          }
+          saveBlobToFile(originalFile, "fileName.txt");
           console.log("Error:", receivedData.message);
         }
         break;
@@ -60,32 +80,99 @@ const WebSocketComponent = () => {
         }
         break;
       default:
+        
         console.log("Error: requestType, ", requestType)
     }
   };
 
   const handleWebSocketClose = () => {
-    console.log('WebSocket connection closed');
+    console.log("WebSocket connection closed");
   };
 
-  const patelFunction = (fileObject) => {
-    // insert functionality here
-    // expect a base 64 string from this
-    return "";
-  }
+  const encryptFile = async (fileObject, encryptionKey) => {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(fileObject);
 
+    return new Promise((resolve, reject) => {
+      reader.onload = function () {
+        const uncompressedData = new Uint8Array(reader.result);
+        zlib.deflate(uncompressedData, function (err, compressedData) {
+          if (!err) {
+            const iv = crypto.randomBytes(16); // Generate a random IV for encryption
+            const cipher = crypto.createCipheriv(
+              "aes-256-cbc",
+              encryptionKey,
+              iv
+            );
+            let encryptedData = cipher.update(compressedData);
+            encryptedData = Buffer.concat([encryptedData, cipher.final()]);
+            const encryptedDataWithIV = Buffer.concat([iv, encryptedData]);
+            const base64Data = encryptedDataWithIV.toString("base64");
+            resolve(base64Data);
+          } else {
+            reject(err);
+          }
+        });
+      };
+    });
+  };
+
+  const decryptFile = async (encryptedData, encryptionKey) => {
+    const encryptedDataWithIV = Buffer.from(encryptedData, "base64");
+    const iv = encryptedDataWithIV.slice(0, 16);
+    const encryptedDataWithoutIV = encryptedDataWithIV.slice(16);
+
+    const decipher = crypto.createDecipheriv("aes-256-cbc", encryptionKey, iv);
+    let decryptedData = decipher.update(encryptedDataWithoutIV);
+    decryptedData = Buffer.concat([decryptedData, decipher.final()]);
+
+    const uncompressedData = await new Promise((resolve, reject) => {
+      zlib.inflate(decryptedData, (err, uncompressedData) => {
+        if (!err) {
+          resolve(uncompressedData);
+        } else {
+          reject(err);
+        }
+      });
+    });
+
+    return new Blob([uncompressedData]);
+  };
+
+  const saveBlobToFile = (blob, fileName) => {
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleSendButtonClick = async () => {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket connection is not open');
+    // TODO:
+    if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket connection is not open");
       return;
     }
+
     if (!selectedFile) {
-      console.error('No file selected');
+      console.error("No file selected");
       return;
     }
-    // sending a File Object
-    let base64FileContent = patelFunction(selectedFile);
+
+
+    let base64FileContent;
+    try {
+      base64FileContent = await encryptFile(selectedFile, encryptionKey);
+    } catch (err) {
+      console.error(err);
+      return;
+    }
+   
 
     let saveFileObject = {
       username: currUsername.current,
@@ -95,8 +182,20 @@ const WebSocketComponent = () => {
       body: base64FileContent
     };
 
-    socket.send(JSON.stringify(saveFileObject));
-    selectedFilename.current = "";
+    socket.current.send(JSON.stringify(saveFileObject));
+
+    // TODO:
+    // This is for decryption on my end
+    // let originalFile;
+    // try {
+    //   originalFile = await decryptFile(base64FileContent, encryptionKey);
+    // } catch (err) {
+    //   console.error(err);
+    //   return;
+    // }
+    // saveBlobToFile(originalFile, "fileName.txt");
+
+    
   };
 
   const handleConnectButtonClick = () => {
@@ -132,6 +231,7 @@ const WebSocketComponent = () => {
           <button className="btn" onClick={handleSendButtonClick}>
             Send File
           </button>
+          
         </div>
       </div>
     </div>
