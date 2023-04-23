@@ -89,8 +89,9 @@ const WebSocketComponent = () => {
       case RequestType.FETCH_ALL_FILES:
         if (status === Status.SUCCESS) {
           console.log("Files fetched");
-          let filesJson = JSON.parse(receivedData.message);
-          setFileList(filesJson.files);
+          console.log(receivedData.message)
+          let files = (receivedData.message.files);
+          setFileList(files);
         } else {
           console.log("Error", receivedData.message);
         }
