@@ -43,9 +43,12 @@ const LogoImage = styled.img`
   margin: 1rem;
 `;
 
-const LoginForm = () => {
+
+
+const LoginForm = (props) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
 
   const handleUsernameChange = (event) => {
     setUsername(event.target.value);
@@ -59,6 +62,7 @@ const LoginForm = () => {
     event.preventDefault();
     // handle login logic here
     localStorage.setItem('username', username);
+    props.onLogin({username,password});
   };
 
   return (

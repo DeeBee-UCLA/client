@@ -13,7 +13,6 @@ const encryptionKey = encryptionString;
 
 const WebSocketComponent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [receivedFile, setReceivedFile] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [pickedFile, setPickedFile] = useState("");
 
@@ -23,13 +22,15 @@ const WebSocketComponent = () => {
   let socket = useRef(null);
 
   const handleFileInputChange = (event) => {
-    const file = event.target.files[0];
-    setSelectedFile(file);
-    selectedFilename.current = file.name;
+    if (event.target.files) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      selectedFilename.current = file.name;
+    }
   };
-  const handleOptionChange = () => {
-    ;
-  }
+  const handleOptionChange = (event) => {
+    setPickedFile(event.target.value);
+  };
 
   // =============================================================================
 
@@ -52,7 +53,6 @@ const WebSocketComponent = () => {
     let requestType = receivedData.requestType;
     let status = receivedData.status;
     switch (requestType) {
-
       case RequestType.INIT:
         if (status === Status.SUCCESS) {
           console.log("Successfully init current username with server");
@@ -172,15 +172,13 @@ const WebSocketComponent = () => {
 
   // ==================================================================================
   const handleFetchAllFiles = async () => {
-
     if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
       console.error("WebSocket connection is not open");
       return;
     }
-
     let fetchFilesObject = {
       username: currUsername.current,
-      password: currPassword.current,
+      password: currUsername.current,
       requestType: RequestType.FETCH_ALL_FILES,
       entityType: "Client",
     };
@@ -194,11 +192,12 @@ const WebSocketComponent = () => {
       return;
     }
 
-    // TODO:
-    // Check if the file to be retrieved is selected
-    // TODO:
-    // Select file name from
-    let filename = "TODO.txt";
+      if (!pickedFile) {
+      console.error("No file selected");
+      return;
+    }
+
+    let filename = pickedFile;
     let retrieveFileObject = {
       username: currUsername.current,
       password: currPassword.current,
@@ -206,7 +205,7 @@ const WebSocketComponent = () => {
       entityType: "Client",
       filename: filename,
     };
-
+    console.log(retrieveFileObject);
     socket.current.send(JSON.stringify(retrieveFileObject));
   };
 
@@ -229,7 +228,7 @@ const WebSocketComponent = () => {
       return;
     }
 
-   currUsername.current = localStorage.getItem('username');
+    currUsername.current = localStorage.getItem("username");
 
     let saveFileObject = {
       username: currUsername.current,
@@ -239,16 +238,8 @@ const WebSocketComponent = () => {
       body: base64FileContent,
     };
     console.log(saveFileObject);
-
+    setFileList(prevState => [...prevState, selectedFilename.current]);
     socket.current.send(JSON.stringify(saveFileObject));
-  };
-
-  const handleConnectButtonClick = () => {
-    const newSocket = new WebSocket('ws://localhost:8080');
-    newSocket.addEventListener('open', handleWebSocketOpen);
-    newSocket.addEventListener('message', handleWebSocketMessage);
-    newSocket.addEventListener('close', handleWebSocketClose);
-    socket.current = newSocket;
   };
 
   const handleLogin = ({ username, password }) => {
@@ -285,7 +276,7 @@ const WebSocketComponent = () => {
   //         <button className="btn" onClick={handleSendButtonClick}>
   //           Send File
   //         </button>
-          
+
   //       </div>
   //     </div>
   //   </div>
