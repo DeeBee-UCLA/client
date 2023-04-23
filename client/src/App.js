@@ -253,7 +253,7 @@ const WebSocketComponent = () => {
     console.log("Login data:", { username, password });
     currUsername.current = username;
     currPassword.current = password;
-    const newSocket = new WebSocket("ws://localhost:3000");
+    const newSocket = new WebSocket("ws://deebeeucla.herokuapp.com");
     newSocket.addEventListener("open", handleWebSocketOpen);
     newSocket.addEventListener("message", handleWebSocketMessage);
     newSocket.addEventListener("close", handleWebSocketClose);
