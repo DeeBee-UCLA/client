@@ -74,13 +74,21 @@ const WebSocketComponent = () => {
       case RequestType.RETRIEVE_FILE:
         if (status === Status.SUCCESS) {
           console.log("File retrieved");
+          let base64FileContent = receivedData.body;    
+          let originalFile;
+          try {
+            originalFile = await decryptFile(base64FileContent, encryptionKey);
+          } catch (err) {
+            console.error(err);
+            return;
+          }
+          saveBlobToFile(originalFile, "fileName.txt");
         }
         else {
           console.log("Error", receivedData.message);
         }
         break;
       default:
-        
         console.log("Error: requestType, ", requestType)
     }
   };
@@ -172,30 +180,17 @@ const WebSocketComponent = () => {
       console.error(err);
       return;
     }
-   
+
+   currUsername.current = localStorage.getItem('username');
 
     let saveFileObject = {
       username: currUsername.current,
-      password: currPassword.current,
       requestType: RequestType.SAVE_FILE,
       filename: selectedFilename.current,
       body: base64FileContent
     };
 
     socket.current.send(JSON.stringify(saveFileObject));
-
-    // TODO:
-    // This is for decryption on my end
-    // let originalFile;
-    // try {
-    //   originalFile = await decryptFile(base64FileContent, encryptionKey);
-    // } catch (err) {
-    //   console.error(err);
-    //   return;
-    // }
-    // saveBlobToFile(originalFile, "fileName.txt");
-
-    
   };
 
   const handleConnectButtonClick = () => {
@@ -212,30 +207,36 @@ const WebSocketComponent = () => {
     currPassword.current = password;
   };
 
-  return (
-    <div className="container">
-      <div className="login-banner">
-        <div className="navbar">
-          <h1 className="title">Login Form</h1>
-        </div>
-      </div>
-      <div className="login-form">
-        <LoginForm onLogin={handleLogin} />
-      </div>
-      <div className="button-group">
-        <button className="btn" onClick={handleConnectButtonClick}>
-          Initialize Connection
-        </button>
-        <div className="input-group">
-          <input type="file" className="file-input" onChange={handleFileInputChange} />
-          <button className="btn" onClick={handleSendButtonClick}>
-            Send File
-          </button>
+  // return (
+  //   <div className="container">
+  //     <div className="login-banner">
+  //       <div className="navbar">
+  //         <h1 className="title">Login Form</h1>
+  //       </div>
+  //     </div>
+  //     <div className="login-form">
+  //       <LoginForm onLogin={handleLogin} />
+  //     </div>
+  //     <div className="button-group">
+  //       <button className="btn" onClick={handleConnectButtonClick}>
+  //         Initialize Connection
+  //       </button>
+  //       <div className="input-group">
+  //         <input type="file" className="file-input" onChange={handleFileInputChange} />
+  //         <button className="btn" onClick={handleSendButtonClick}>
+  //           Send File
+  //         </button>
           
-        </div>
-      </div>
-    </div>
-  );
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+
+  return (
+    <>
+    <LoginForm></LoginForm>
+    </>
+  )
   
 
   
