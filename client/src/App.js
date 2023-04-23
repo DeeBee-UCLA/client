@@ -57,6 +57,7 @@ const WebSocketComponent = () => {
       case RequestType.INIT:
         if (status === Status.SUCCESS) {
           console.log("Successfully init current username with server");
+          setLogin(false);
         } else {
           // this should not happen
           console.log("Failed Init");
@@ -257,7 +258,6 @@ const WebSocketComponent = () => {
     newSocket.addEventListener("message", handleWebSocketMessage);
     newSocket.addEventListener("close", handleWebSocketClose);
     socket.current = newSocket;
-    setLogin(false);
   };
 
 
