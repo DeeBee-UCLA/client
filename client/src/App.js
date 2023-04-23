@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import LoginForm from "./LoginForm";
 import { RequestType, Status } from './constants';
+import './App.css';
 
 const WebSocketComponent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -113,17 +114,31 @@ const WebSocketComponent = () => {
   };
 
   return (
-    <div>
-      <div>
-      <h1>Login Form</h1>
-      <LoginForm onLogin={handleLogin} />
-    </div>
-      <button onClick={handleConnectButtonClick}>Initialize Connection</button>
-      <input type="file" onChange={handleFileInputChange} />
-      <button onClick={handleSendButtonClick}>Send File</button>
-   
+    <div className="container">
+      <div className="login-banner">
+        <div className="navbar">
+          <h1 className="title">Login Form</h1>
+        </div>
+      </div>
+      <div className="login-form">
+        <LoginForm onLogin={handleLogin} />
+      </div>
+      <div className="button-group">
+        <button className="btn" onClick={handleConnectButtonClick}>
+          Initialize Connection
+        </button>
+        <div className="input-group">
+          <input type="file" className="file-input" onChange={handleFileInputChange} />
+          <button className="btn" onClick={handleSendButtonClick}>
+            Send File
+          </button>
+        </div>
+      </div>
     </div>
   );
+  
+
+  
 };
 
 export default WebSocketComponent;
