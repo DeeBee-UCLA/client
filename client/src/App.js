@@ -46,6 +46,7 @@ const WebSocketComponent = () => {
     };
     socket.current.send(JSON.stringify(initObject));
     handleFetchAllFiles();
+    setLogin(false);
   };
 
   const handleWebSocketMessage = async (event) => {
@@ -106,6 +107,8 @@ const WebSocketComponent = () => {
 
   const handleWebSocketClose = () => {
     console.log("WebSocket connection closed");
+    setLogin(true);
+    localStorage.setItem("username", '');
   };
 
   // ==========================================================================
@@ -258,6 +261,7 @@ const WebSocketComponent = () => {
     newSocket.addEventListener("message", handleWebSocketMessage);
     newSocket.addEventListener("close", handleWebSocketClose);
     socket.current = newSocket;
+    
   };
 
 
@@ -276,32 +280,29 @@ const WebSocketComponent = () => {
       </div>)}
 
       {!login && (
-        <>
-        <button className="btn" onClick={handleRetrieveButtonClick}>
-        Get File
-      </button>
-      <select onChange={handleOptionChange}>
-        <option value="">Select a file</option>
-        {fileList.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <p>You picked: {pickedFile}</p>
-      <div className="button-group">
-        <div className="input-group">
-          <input
-            type="file"
-            className="file-input"
-            onChange={handleFileInputChange}
-          />
-          <button className="btn" onClick={handleSendButtonClick}>
-            Send File
-          </button>
-        </div>
-        </div>
-        </>
+       <>
+       <button style={{ backgroundColor: '#f1bf98', color: '#ffffff' }} className="btn" onClick={handleRetrieveButtonClick}>
+         Get File
+       </button>
+       <select style={{ backgroundColor: '#e1f4cb', color: '#717568' }} onChange={handleOptionChange}>
+         <option value="">Select a file</option>
+         {fileList.map((option) => (
+           <option key={option} value={option}>
+             {option}
+           </option>
+         ))}
+       </select>
+       <p style={{ color: '#3f4739' }}>You picked: {pickedFile}</p>
+       <div className="button-group">
+         <div className="input-group">
+           <input style={{ backgroundColor: '#e1f4cb', color: '#717568' }} type="file" className="file-input" onChange={handleFileInputChange} />
+           <button style={{ backgroundColor: '#bacba9', color: '#ffffff' }} className="btn" onClick={handleSendButtonClick}>
+             Send File
+           </button>
+         </div>
+       </div>
+     </>
+     
       
       )}
 

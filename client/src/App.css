@@ -228,4 +228,85 @@ button:hover {
   text-align: center;
 }
 
+/* Styling for smaller-container */
+.smaller-container {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 20px;
+  background-color: #e1f4cb; /* Nyanza */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
 
+/* Styling for buttons */
+.btn {
+  display: inline-block;
+  margin: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  color: #ffffff; /* White */
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Styling for Get File button */
+.btn:first-of-type {
+  background-color: #f1bf98; /* Peach */
+}
+
+/* Styling for Send File button */
+.btn:last-of-type {
+  background-color: #bacba9; /* Sage */
+}
+
+/* Styling for select dropdown */
+select {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
+  color: #717568; /* Dim gray */
+  background-color: #e1f4cb; /* Nyanza */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Styling for picked file display */
+p {
+  margin: 10px;
+  color: #3f4739; /* Black olive */
+  font-size: 16px;
+}
+
+/* Styling for file input and send button */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.file-input {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
+  color: #717568; /* Dim gray */
+  background-color: #e1f4cb; /* Nyanza */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  .smaller-container {
+    width: 100%;
+  }
+}
