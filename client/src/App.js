@@ -1,12 +1,11 @@
 import React, { useRef, useState } from "react";
 import LoginForm from "./LoginForm";
-import { RequestType, Status } from './constants';
-import './App.css';
+import { RequestType, Status } from "./constants";
+import "./App.css";
 const crypto = require("crypto");
 const zlib = require("zlib");
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
-
 
 const encryptionString = process.env.REACT_APP_ENCRYPTION_KEY;
 // const encryptionKey = crypto.createHash('sha256').update(String(encryptionString)).digest('base64').substring(0, 32);
@@ -15,27 +14,32 @@ const encryptionKey = encryptionString;
 const WebSocketComponent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [receivedFile, setReceivedFile] = useState(null);
-  let selectedFilename = useRef('');
-  let currUsername = useRef('');
-  let currPassword = useRef('');
+  const [fileList, setFileList] = useState([]);
+
+  let selectedFilename = useRef("");
+  let currUsername = useRef("");
+  let currPassword = useRef("");
   let socket = useRef(null);
-  
+
   const handleFileInputChange = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
     selectedFilename.current = file.name;
   };
 
+  // =============================================================================
+
   const handleWebSocketOpen = () => {
-    console.log('WebSocket connection opened');
-   
-      let initObject = {	
-        requestType: RequestType.INIT,
-        username: currUsername.current,
-        password: currPassword.current
-      }
-      socket.current.send(JSON.stringify(initObject));
-   
+    console.log("WebSocket connection opened");
+
+    let initObject = {
+      requestType: RequestType.INIT,
+      entityType: "Client",
+      username: currUsername.current,
+      password: currPassword.current,
+    };
+    socket.current.send(JSON.stringify(initObject));
+    handleFetchAllFiles();
   };
 
   const handleWebSocketMessage = async (event) => {
@@ -43,51 +47,60 @@ const WebSocketComponent = () => {
     console.log("Response from server:", receivedData);
     let requestType = receivedData.requestType;
     let status = receivedData.status;
-    switch(requestType) {
+    switch (requestType) {
       case RequestType.INIT:
         if (status === Status.SUCCESS) {
           console.log("Successfully init current username with server");
-        }
-        else {
+        } else {
           // this should not happen
           console.log("Failed Init");
         }
         break;
+
       case RequestType.SAVE_FILE:
         if (status === Status.SUCCESS) {
-          console.log("File successfully sent!")
+          console.log("File successfully sent!");
+        } else {
+          console.log("Error:", receivedData.message);
         }
-        else {
-          // This is for decryption on my end
-          let base64FileContent = receivedData.body;
+        break;
+
+      case RequestType.RETRIEVE_FILE:
+        if (status === Status.SUCCESS) {
+          console.log("File retrieved");
           let originalFile;
           try {
-            originalFile = await decryptFile(base64FileContent, encryptionKey);
+            originalFile = await decryptFile(receivedData.body, encryptionKey);
           } catch (err) {
             console.error(err);
             return;
           }
           saveBlobToFile(originalFile, "fileName.txt");
-          console.log("Error:", receivedData.message);
-        }
-        break;
-      case RequestType.RETRIEVE_FILE:
-        if (status === Status.SUCCESS) {
-          console.log("File retrieved");
-        }
-        else {
+        } else {
           console.log("Error", receivedData.message);
         }
         break;
+
+      case RequestType.FETCH_ALL_FILES:
+        if (status === Status.SUCCESS) {
+          console.log("Files fetched");
+          let filesJson = JSON.parse(receivedData.message);
+          setFileList(filesJson.files);
+        } else {
+          console.log("Error", receivedData.message);
+        }
+        break;
+
       default:
-        
-        console.log("Error: requestType, ", requestType)
+        console.log("Error: requestType, ", requestType);
     }
   };
 
   const handleWebSocketClose = () => {
     console.log("WebSocket connection closed");
   };
+
+  // ==========================================================================
 
   const encryptFile = async (fileObject, encryptionKey) => {
     const reader = new FileReader();
@@ -152,8 +165,46 @@ const WebSocketComponent = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleSendButtonClick = async () => {
+  // ==================================================================================
+  const handleFetchAllFiles = async () => {
+    if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket connection is not open");
+      return;
+    }
+
+    let fetchFilesObject = {
+      username: currUsername.current,
+      password: currPassword.current,
+      requestType: RequestType.FETCH_ALL_FILES,
+      entityType: "Client",
+    };
+
+    socket.current.send(JSON.stringify(fetchFilesObject));
+  };
+
+  const handleRetrieveButtonClick = async () => {
+    if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket connection is not open");
+      return;
+    }
+
     // TODO:
+    // Check if the file to be retrieved is selected
+    // TODO:
+    // Select file name from
+    let filename = "TODO.txt";
+    let retrieveFileObject = {
+      username: currUsername.current,
+      password: currPassword.current,
+      requestType: RequestType.RETRIEVE_FILE,
+      entityType: "Client",
+      filename: filename,
+    };
+
+    socket.current.send(JSON.stringify(retrieveFileObject));
+  };
+
+  const handleSendButtonClick = async () => {
     if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
       console.error("WebSocket connection is not open");
       return;
@@ -164,7 +215,6 @@ const WebSocketComponent = () => {
       return;
     }
 
-
     let base64FileContent;
     try {
       base64FileContent = await encryptFile(selectedFile, encryptionKey);
@@ -172,44 +222,33 @@ const WebSocketComponent = () => {
       console.error(err);
       return;
     }
-   
 
     let saveFileObject = {
       username: currUsername.current,
       password: currPassword.current,
       requestType: RequestType.SAVE_FILE,
+      entityType: "Client",
       filename: selectedFilename.current,
-      body: base64FileContent
+      body: base64FileContent,
     };
+    console.log(saveFileObject);
 
     socket.current.send(JSON.stringify(saveFileObject));
-
-    // TODO:
-    // This is for decryption on my end
-    // let originalFile;
-    // try {
-    //   originalFile = await decryptFile(base64FileContent, encryptionKey);
-    // } catch (err) {
-    //   console.error(err);
-    //   return;
-    // }
-    // saveBlobToFile(originalFile, "fileName.txt");
-
-    
-  };
-
-  const handleConnectButtonClick = () => {
-    const newSocket = new WebSocket('ws://localhost:8080');
-    newSocket.addEventListener('open', handleWebSocketOpen);
-    newSocket.addEventListener('message', handleWebSocketMessage);
-    newSocket.addEventListener('close', handleWebSocketClose);
-    socket.current = newSocket;
   };
 
   const handleLogin = ({ username, password }) => {
+    if (username.length < 3 || password.length < 3) {
+      console.err("Username and password must be at least 5 characters long");
+      return;
+    }
     console.log("Login data:", { username, password });
     currUsername.current = username;
     currPassword.current = password;
+    const newSocket = new WebSocket("ws://localhost:3000");
+    newSocket.addEventListener("open", handleWebSocketOpen);
+    newSocket.addEventListener("message", handleWebSocketMessage);
+    newSocket.addEventListener("close", handleWebSocketClose);
+    socket.current = newSocket;
   };
 
   return (
@@ -222,23 +261,23 @@ const WebSocketComponent = () => {
       <div className="login-form">
         <LoginForm onLogin={handleLogin} />
       </div>
+      <button className="btn" onClick={handleRetrieveButtonClick}>
+        Get File
+      </button>
       <div className="button-group">
-        <button className="btn" onClick={handleConnectButtonClick}>
-          Initialize Connection
-        </button>
         <div className="input-group">
-          <input type="file" className="file-input" onChange={handleFileInputChange} />
+          <input
+            type="file"
+            className="file-input"
+            onChange={handleFileInputChange}
+          />
           <button className="btn" onClick={handleSendButtonClick}>
             Send File
           </button>
-          
         </div>
       </div>
     </div>
   );
-  
-
-  
 };
 
 export default WebSocketComponent;
