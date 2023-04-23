@@ -15,6 +15,7 @@ const WebSocketComponent = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [pickedFile, setPickedFile] = useState("");
+  const [login, setLogin] = useState(true);
 
   let selectedFilename = useRef("");
   let currUsername = useRef("");
@@ -256,34 +257,13 @@ const WebSocketComponent = () => {
     newSocket.addEventListener("message", handleWebSocketMessage);
     newSocket.addEventListener("close", handleWebSocketClose);
     socket.current = newSocket;
+    setLogin(false);
   };
 
-  // return (
-  //   <div className="container">
-  //     <div className="login-banner">
-  //       <div className="navbar">
-  //         <h1 className="title">Login Form</h1>
-  //       </div>
-  //     </div>
-  //     <div className="login-form">
-  //       <LoginForm onLogin={handleLogin} />
-  //     </div>
-  //     <div className="button-group">
-  //       <button className="btn" onClick={handleConnectButtonClick}>
-  //         Initialize Connection
-  //       </button>
-  //       <div className="input-group">
-  //         <input type="file" className="file-input" onChange={handleFileInputChange} />
-  //         <button className="btn" onClick={handleSendButtonClick}>
-  //           Send File
-  //         </button>
-
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 
   return (
+    <>
+    {login && (
     <div className="container">
       <div className="login-banner">
         <div className="navbar">
@@ -293,7 +273,11 @@ const WebSocketComponent = () => {
       <div className="login-form">
         <LoginForm onLogin={handleLogin} />
       </div>
-      <button className="btn" onClick={handleRetrieveButtonClick}>
+      </div>)}
+
+      {!login && (
+        <>
+        <button className="btn" onClick={handleRetrieveButtonClick}>
         Get File
       </button>
       <select onChange={handleOptionChange}>
@@ -316,9 +300,14 @@ const WebSocketComponent = () => {
             Send File
           </button>
         </div>
-      </div>
-    </div>
-  );
-};
+        </div>
+        </>
+      
+      )}
 
+      </>
+
+    );
+
+    }
 export default WebSocketComponent;
