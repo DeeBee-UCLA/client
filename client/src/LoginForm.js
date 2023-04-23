@@ -2,37 +2,11 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import Logo from './logo.png';
 
-const ModalContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: fixed;
-  z-index: 999;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-`;
-
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  padding: 2rem;
-  border-radius: 10px;
-  background-color: #e1f4cb;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-`;
-
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  width: 100%;
 `;
 
 const Label = styled.label`
@@ -64,15 +38,6 @@ const Button = styled.button`
   }
 `;
 
-const LogoContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 150px;
-  background-color: #3f4739;
-  border-radius: 10px 10px 0 0;
-`;
-
 const LogoImage = styled.img`
   height: 100px;
   margin: 1rem;
@@ -97,20 +62,14 @@ const LoginForm = () => {
   };
 
   return (
-    <ModalContainer>
-      <ModalContent>
-        <LogoContainer>
-          <LogoImage src={Logo} alt="Logo" />
-        </LogoContainer>
-        <Form onSubmit={handleSubmit}>
-          <Label htmlFor="username">Username:</Label>
-          <Input type="text" id="username" value={username} onChange={handleUsernameChange} />
-          <Label htmlFor="password">Password:</Label>
-          <Input type="password" id="password" value={password} onChange={handlePasswordChange} />
-          <Button type="submit">Login</Button>
-        </Form>
-      </ModalContent>
-    </ModalContainer>
+    <Form onSubmit={handleSubmit}>
+      <LogoImage src={Logo} alt="Logo" />
+      <Label htmlFor="username">Username:</Label>
+      <Input type="text" id="username" value={username} onChange={handleUsernameChange} />
+      <Label htmlFor="password">Password:</Label>
+      <Input type="password" id="password" value={password} onChange={handlePasswordChange} />
+      <Button type="submit">Login</Button>
+    </Form>
   );
 };
 
